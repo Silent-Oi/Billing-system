@@ -1,0 +1,133 @@
+import time,csv
+
+#判断选项
+choice1=['1','记录'] 
+choice2=['2','读取']
+choice3=['3','查询']
+choice4=['4','删除']
+choice5=['5','退出']
+choice41=['确定']
+
+#把主体写在循环里提高易用性，尤其是打包成用命令行控制的可执行文件后
+while 1:
+
+    #读取账单文件
+    with open('E:/Silence/OneDrive - gsyw/Work/computer/python/misc/账单/2023bill.csv', "r") as read_file: 
+        data = list(csv.reader(read_file))      #把账单文件内容保存为列表
+    data2=data[1:]      #把出去首行的账单记录保存为列表
+
+    #备份原账单文件
+    with open('E:/Silence/OneDrive - gsyw/Work/computer/python/misc/账单/2023bill_back.csv','w',newline='') as f:
+        writer=csv.writer(f)
+        writer.writerows(data)
+
+    day=str(time.strftime('%Y/%m/%d'))      #完整日期，记录时直接放入账单文件
+    day_d=str(time.strftime('%d'))          #当日日期，为了统计当天支出总额
+    day_m=str(time.strftime('%m'))          #当月月份，为了统计和查询相应月份的总支出
+
+    #程序启动时显示的内容
+    print('\n'+time.strftime('%Y/%m/%d, %H:%M:%S, %A'))     
+    print('----------------\n欢迎使用账单系统\n----------------\n请选择:1.记录 |2.读取 |3.查询 |4.删除 |5.退出')
+
+    #输入选择
+    choice=input()
+
+    #判断选择
+    if choice in choice1: #记录新内容
+
+        #输入金额，只可以输入数字
+        print('请输入要记录的金额(输入取消可以取消记录,多个金额请用逗号隔开):')
+        money=input() 
+
+        if money=='取消':
+            print('--------\n取消记录\n--------')
+            continue
+
+        #输入多个金额时，自动计算总额
+        money=money.split(',')
+        money=[float(money[i]) for i in range(0,len(money))]
+        money=sum(money)
+
+        #输入描述和中嘞
+        print('请输入要记录的描述:')
+        event=input()
+        print('请输入分类: 餐饮\ 娱乐\ 游戏\ 日用 ')
+        sort=input()
+
+        #将新记录放入data
+        data.append([day,sort,money,event,day_m,day_d]) 
+        print('--------\n记录成功\n--------')
+
+        #把data重新保存至账单文件
+        with open('E:/Silence/OneDrive - gsyw/Work/computer/python/misc/账单/2023bill.csv','w',newline='') as f: 
+            writer=csv.writer(f)
+            writer.writerows(data)
+        continue
+
+    elif choice in choice2: #读取当月的所有记录
+
+        #定义初始变量
+        total_d=0       #日总支出
+        total_m=0       #月总支出
+
+        for row in data2:
+            if float(row[-2])==float(day_m):        #判断是否为当月，当月则显示且把金额累加到月总支出
+                print('{:<12}￥{:<7}{:<8}{}'.format(row[0],row[1],row[2],row[3]))  
+                total_m+=float(row[2])
+                if str(row[-1])==day_d:             #判断是否为当日，当日则把金额加到日总支出
+                    total_d+=float(row[2])
+        
+        print('************************\n您今日的总支出为'+str(total_d)+'元')
+        print('您当月的总支出为:'+'{0:.1f}'.format(total_m)+'元\n************************')
+        continue
+
+
+    elif choice in choice3: #查询目标记录
+        
+        #定义初始变量
+        total=0
+
+        #输入目标
+        print('请输入您要查询的月份:')
+        month=input()
+        print('请输入您要查询的消费类别(留空默认不查询): 餐饮\ 娱乐\ 游戏\ 日用 ')
+        sort_aim=input('')
+
+        if sort_aim=='':        #不查询种类时
+            for row in data2:
+                if float(row[-2])==float(month):
+                    print('{:<12}￥{:<7}{:<8}{}'.format(row[0],row[1],row[2],row[3]))
+                    total+=float(row[2])
+            print('*********************************\n您'+str(month)+'月的总支出为:'+str(total)+'元\n*********************************')
+            continue
+        else:                   #查询种类时
+            for row in data2:
+                if float(row[-2])==float(month):
+                    if str(row[1])==str(sort_aim):
+                        print('{:<12}￥{:<7}{:<8}{}'.format(row[0],row[1],row[2],row[3]))
+                        total+=float(row[2])
+            print('*********************************\n您'+str(month)+'月'+str(sort_aim)+'的总支出为:'+str(total)+'元\n*********************************')
+            continue
+    
+    elif choice in choice4: #删除最新添加记录
+        print('确定要删除最新添加的记录吗:1.确定    2.取消')
+        choicea=input()
+        
+        if choicea in choice41: #防止误删除
+            data.pop()
+            print('--------\n删除成功\n--------')
+            with open('E:/Silence/OneDrive - gsyw/Work/computer/python/misc/账单/2023bill.csv','w',newline='') as f: #保存操作
+                writer=csv.writer(f)
+                writer.writerows(data)
+            continue
+        else:
+            print('----------\n取消\n----------')
+            continue
+
+    elif choice in choice5:
+        print('--------\n  退出\n--------')
+        break
+    
+    else: 
+        print('--------\n输入错误\n--------') #防止输入错误
+        continue
